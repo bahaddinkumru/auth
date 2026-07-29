@@ -3,6 +3,7 @@ package auth.auth.controller;
 import auth.auth.model.dto.request.LoginRequest;
 import auth.auth.model.dto.request.TokenRefreshRequest;
 import auth.auth.model.dto.response.TokenResponse;
+import auth.auth.security.annotation.Public;
 import auth.auth.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Public
 public class AuthController {
 
     private final AuthService authService;

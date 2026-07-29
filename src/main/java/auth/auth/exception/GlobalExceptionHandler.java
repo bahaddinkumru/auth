@@ -8,6 +8,7 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -26,6 +27,19 @@ public class GlobalExceptionHandler {
         problemDetail.setType(URI.create("https://api.auth.com/errors/" + errorCode.getCode()));
         problemDetail.setTitle(errorCode.name());
         problemDetail.setProperty("code", errorCode.getCode());
+        problemDetail.setProperty("timestamp", Instant.now().toString());
+
+        return problemDetail;
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ProblemDetail handleAccessDenied(AccessDeniedException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN,
+                "Bu işlem için yetkiniz yok.");
+
+        problemDetail.setTitle("FORBIDDEN");
+        problemDetail.setProperty("code", "SYS_403");
         problemDetail.setProperty("timestamp", Instant.now().toString());
 
         return problemDetail;
