@@ -1,0 +1,12 @@
+package auth.auth.repository;
+
+import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+import auth.auth.model.entity.User;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+
+    boolean existsByEmail(String email);
+
+    Optional<User> findByEmail(String email);
+}

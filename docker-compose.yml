@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:14.0
+    container_name: auth_db
+    restart: always
+    environment:
+      POSTGRES_USER: reopiya_user
+      POSTGRES_PASSWORD: reopiya_password
+      POSTGRES_DB: reopiya_auth_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
