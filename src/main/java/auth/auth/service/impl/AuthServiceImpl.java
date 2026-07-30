@@ -30,18 +30,20 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(normalizedEmail)
                 .orElseGet(() -> userRepository.findByEmail(request.getEmail())
                         .orElseThrow(() -> {
-                            log.warn("Giriş başarısız: E-posta adresi veritabanında bulunamadı -> '{}'",
+                            log.warn(
+                                    "Giriş başarısız: E-posta adresi veritabanında bulunamadı -> Attempted Email: '{}'",
                                     request.getEmail());
                             return new BusinessException(ErrorCode.BAD_CREDENTIALS);
                         }));
 
         boolean isPasswordMatch = passwordEncoder.matches(request.getPassword(), user.getPassword());
         if (!isPasswordMatch) {
-            log.warn("Giriş başarısız: Kullanıcı mevcut fakat şifre eşleşmedi -> '{}'", request.getEmail());
+            log.warn("Giriş başarısız: Kullanıcı mevcut fakat şifre eşleşmedi -> UserId: '{}'", user.getId());
             throw new BusinessException(ErrorCode.BAD_CREDENTIALS);
         }
 
-        log.info("Kullanıcı başarıyla giriş yaptı -> '{}'", user.getEmail());
+        log.info("Kullanıcı başarıyla giriş yaptı -> UserId: '{}'", user.getId());
+
         return tokenService.generateTokens(user, ipAddress, userAgent);
     }
 

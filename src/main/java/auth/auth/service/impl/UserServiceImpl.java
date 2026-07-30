@@ -14,9 +14,11 @@ import auth.auth.model.enums.Role;
 import auth.auth.repository.UserRepository;
 import auth.auth.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
@@ -28,8 +30,11 @@ public class UserServiceImpl implements UserService {
     public UserResponse createUser(UserRegisterRequest request) {
         String normalizedEmail = request.getEmail() != null ? request.getEmail().trim().toLowerCase() : "";
 
-        if (userRepository.existsByEmail(normalizedEmail) || userRepository.existsByEmail(request.getEmail()))
+        if (userRepository.existsByEmail(normalizedEmail) || userRepository.existsByEmail(request.getEmail())) {
+            log.warn("Kayıt başarısız: Bu e-posta adresi zaten kullanımda -> Attempted Email: '{}'",
+                    request.getEmail());
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
+        }
 
         User user = userMapper.toEntity(request);
         user.setEmail(normalizedEmail);
@@ -37,6 +42,8 @@ public class UserServiceImpl implements UserService {
         user.setRole(Role.ROLE_USER);
 
         User savedUser = userRepository.save(user);
+
+        log.info("Yeni kullanıcı başarıyla oluşturuldu -> UserId: '{}'", savedUser.getId());
 
         return userMapper.toResponse(savedUser);
     }
