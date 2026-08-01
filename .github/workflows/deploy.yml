@@ -51,15 +51,27 @@ jobs:
       - name: Health check
         shell: powershell
         run: |
-          Start-Sleep -Seconds 15
-          try {
-            $response = Invoke-WebRequest -Uri "http://localhost:8081/api/v1/actuator/health" -UseBasicParsing
-            if ($response.StatusCode -ne 200) {
-              Write-Error "Health check başarısız, status code: $($response.StatusCode)"
-              exit 1
+          $maxAttempts = 15
+          $delaySeconds = 5
+          $healthy = $false
+
+          for ($i = 1; $i -le $maxAttempts; $i++) {
+            Write-Host "Health check denemesi $i/$maxAttempts..."
+            try {
+              $response = Invoke-WebRequest -Uri "http://localhost:8081/api/v1/actuator/health" -UseBasicParsing -TimeoutSec 5
+              if ($response.StatusCode -eq 200) {
+                Write-Host "Uygulama ayakta: $($response.Content)"
+                $healthy = $true
+                break
+              }
+            } catch {
+              Write-Host "Henüz hazır değil, $delaySeconds sn bekleniyor..."
             }
-            Write-Host "Health check başarılı: $($response.Content)"
-          } catch {
-            Write-Error "Health check başarısız: $_"
+            Start-Sleep -Seconds $delaySeconds
+          }
+
+          if (-not $healthy) {
+            Write-Error "Uygulama $($maxAttempts * $delaySeconds) saniye içinde ayağa kalkmadı."
+            docker compose logs app --tail 50
             exit 1
           }
