@@ -39,10 +39,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 15
-      start_period: 30s
+      start_period: 40s
 
   db:
-    image: postgres:14.0
+    image: postgres:14-alpine
     container_name: auth_db
     restart: always
     environment:
@@ -50,7 +50,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -62,27 +62,34 @@ services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
     container_name: elasticsearch
+    restart: always
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "9200:9200"
+    deploy:
+      resources:
+        limits:
+          memory: 1g
 
   logstash:
     image: docker.elastic.co/logstash/logstash:7.17.10
     container_name: logstash
+    restart: always
     volumes:
       - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
-    ports:
-      - "5000:5000"
     depends_on:
       - elasticsearch
+    deploy:
+      resources:
+        limits:
+          memory: 768m
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.17.10
     container_name: kibana
+    restart: always
     ports:
-      - "5601:5601"
+      - "127.0.0.1:5601:5601"
     depends_on:
       - elasticsearch
 

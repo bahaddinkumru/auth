@@ -10,8 +10,6 @@ jobs:
     steps:
       - name: Kodu çek
         uses: actions/checkout@v4
-        with:
-          persist-credentials: false
 
       - name: Java 17 kur
         uses: actions/setup-java@v4
@@ -30,8 +28,6 @@ jobs:
     steps:
       - name: Kodu çek
         uses: actions/checkout@v4
-        with:
-          persist-credentials: false
 
       - name: .env dosyasını oluştur
         shell: powershell
@@ -46,30 +42,13 @@ jobs:
           "@
           [System.IO.File]::WriteAllText("$PWD\.env", $envContent, [System.Text.Encoding]::UTF8)
 
-      - name: Yeni imajı build al
-        run: docker compose --env-file .env build
+      - name: Build al ve ayağa kaldır (tüm servisler healthy olana kadar bekler)
+        run: docker compose --env-file .env up -d --build --wait
 
-      - name: Container'ları ayağa kaldır
-        run: docker compose --env-file .env up -d
+      - name: Deploy başarısız olursa logları göster
+        if: failure()
+        run: docker compose logs --tail 100
 
-      - name: Health check (Runner Üzerinden)
-        shell: powershell
-        run: |
-          $endpoint = "http://localhost:8081/api/v1/actuator/health"
-          Write-Host "Uygulamanın ayağa kalkması bekleniyor..."
-          
-          for ($i = 1; $i -le 30; $i++) {
-            try {
-              $response = Invoke-WebRequest -Uri $endpoint -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
-              if ($response.StatusCode -eq 200) {
-                Write-Host "Uygulama ayakta ve HTTP 200 yanıtı verdi!"
-                exit 0
-              }
-            } catch {
-              Write-Host "Deneme $i/30 başarısız. 5 saniye bekleniyor..."
-            }
-            Start-Sleep -Seconds 5
-          }
-          
-          Write-Error "Uygulama zaman aşımına uğradı."
-          exit 1
+      - name: Kullanılmayan Docker imajlarını temizle
+        if: success()
+        run: docker image prune -f
