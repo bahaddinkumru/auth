@@ -49,5 +49,27 @@ jobs:
       - name: Yeni imajı build al
         run: docker compose --env-file .env build
 
-      - name: Container'ları ayağa kaldır ve hazır olana kadar bekle
-        run: docker compose --env-file .env up -d --wait
+      - name: Container'ları ayağa kaldır
+        run: docker compose --env-file .env up -d
+
+      - name: Health check (Runner Üzerinden)
+        shell: powershell
+        run: |
+          $endpoint = "http://localhost:8081/api/v1/actuator/health"
+          Write-Host "Uygulamanın ayağa kalkması bekleniyor..."
+          
+          for ($i = 1; $i -le 30; $i++) {
+            try {
+              $response = Invoke-WebRequest -Uri $endpoint -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
+              if ($response.StatusCode -eq 200) {
+                Write-Host "Uygulama ayakta ve HTTP 200 yanıtı verdi!"
+                exit 0
+              }
+            } catch {
+              Write-Host "Deneme $i/30 başarısız. 5 saniye bekleniyor..."
+            }
+            Start-Sleep -Seconds 5
+          }
+          
+          Write-Error "Uygulama zaman aşımına uğradı."
+          exit 1
