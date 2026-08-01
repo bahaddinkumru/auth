@@ -28,9 +28,9 @@ jobs:
     steps:
       - name: Kodu çek
         uses: actions/checkout@v4
-
+        
       - name: .env dosyasını oluştur
-        shell: pwsh
+        shell: powershell
         run: |
           $envContent = @"
           SPRING_PROFILES_ACTIVE=${{ github.ref_name }}
