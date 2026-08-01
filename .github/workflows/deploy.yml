@@ -1,19 +1,50 @@
-name: Test Branch Deploy
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ test ]
+    branches: [ test, prod ]
 
 jobs:
-  build-and-run:
+  test:
     runs-on: self-hosted
-
     steps:
       - name: Kodu çek
         uses: actions/checkout@v4
+
+      - name: Java 17 kur
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Unit testleri çalıştır
+        run: ./mvnw test
+
+  deploy:
+    needs: test
+    runs-on: self-hosted
+    environment: ${{ github.ref_name }}
+    steps:
+      - name: Kodu çek
+        uses: actions/checkout@v4
+
+      - name: .env dosyasını oluştur
+        run: |
+          echo "SPRING_PROFILES_ACTIVE=${{ github.ref_name }}" > .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}" >> .env
+          echo "JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}" >> .env
 
       - name: Eski container'ları durdur
         run: docker compose down
 
       - name: Build al ve ayağa kaldır
-        run: docker compose up -d --build
+        run: docker compose --env-file .env up -d --build
+
+      - name: Health check
+        run: |
+          sleep 15
+          curl -f http://localhost:8081/api/v1/actuator/health || exit 1
