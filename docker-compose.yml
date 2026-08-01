@@ -8,7 +8,8 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - app
+      app:
+        condition: service_healthy
 
   app:
     build:
@@ -29,8 +30,16 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       LOGSTASH_HOST: logstash
     depends_on:
-      - db
-      - logstash
+      db:
+        condition: service_healthy
+      logstash:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/api/v1/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
 
   db:
     image: postgres:14.0
@@ -44,6 +53,11 @@ services:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
