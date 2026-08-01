@@ -19,7 +19,7 @@ jobs:
           cache: maven
 
       - name: Unit testleri çalıştır
-        run: ./mvnw test
+        run: ./mvnw clean test
 
   deploy:
     needs: test

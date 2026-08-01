@@ -19,11 +19,14 @@ services:
     ports:
       - '8081:8081'
     environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
       DB_HOST: db
       DB_PORT: 5432
-      DB_NAME: reopiya_auth_db
-      DB_USER: reopiya_user
-      DB_PASSWORD: reopiya_password
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       LOGSTASH_HOST: logstash
     depends_on:
       - db
@@ -34,9 +37,9 @@ services:
     container_name: auth_db
     restart: always
     environment:
-      POSTGRES_USER: reopiya_user
-      POSTGRES_PASSWORD: reopiya_password
-      POSTGRES_DB: reopiya_auth_db
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - '5432:5432'
     volumes:
