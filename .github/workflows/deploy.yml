@@ -28,7 +28,7 @@ jobs:
     steps:
       - name: Kodu çek
         uses: actions/checkout@v4
-        
+
       - name: .env dosyasını oluştur
         shell: powershell
         run: |
@@ -49,7 +49,17 @@ jobs:
         run: docker compose --env-file .env up -d --build
 
       - name: Health check
+        shell: powershell
         run: |
-          sleep 15
-          curl -f http://localhost:8081/api/v1/actuator/health || exit 1
-          
+          Start-Sleep -Seconds 15
+          try {
+            $response = Invoke-WebRequest -Uri "http://localhost:8081/api/v1/actuator/health" -UseBasicParsing
+            if ($response.StatusCode -ne 200) {
+              Write-Error "Health check başarısız, status code: $($response.StatusCode)"
+              exit 1
+            }
+            Write-Host "Health check başarılı: $($response.Content)"
+          } catch {
+            Write-Error "Health check başarısız: $_"
+            exit 1
+          }
