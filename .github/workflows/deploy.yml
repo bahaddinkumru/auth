@@ -1,19 +1,54 @@
-name: Test Branch Deploy
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ test ]
+    branches: [ test, prod ]
 
 jobs:
-  build-and-run:
+  test:
     runs-on: self-hosted
-
     steps:
       - name: Kodu çek
         uses: actions/checkout@v4
 
-      - name: Eski container'ları durdur
-        run: docker compose down
+      - name: Java 17 kur
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
 
-      - name: Build al ve ayağa kaldır
-        run: docker compose up -d --build
+      - name: Unit testleri çalıştır
+        run: ./mvnw clean test
+
+  deploy:
+    needs: test
+    runs-on: self-hosted
+    environment: ${{ github.ref_name }}
+    steps:
+      - name: Kodu çek
+        uses: actions/checkout@v4
+
+      - name: .env dosyasını oluştur
+        shell: powershell
+        run: |
+          $envContent = @"
+          SPRING_PROFILES_ACTIVE=${{ github.ref_name }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USERNAME=${{ secrets.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
+          JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
+          "@
+          [System.IO.File]::WriteAllText("$PWD\.env", $envContent, [System.Text.Encoding]::UTF8)
+
+      - name: Build al ve ayağa kaldır (tüm servisler healthy olana kadar bekler)
+        run: docker compose --env-file .env up -d --build --wait
+
+      - name: Deploy başarısız olursa logları göster
+        if: failure()
+        run: docker compose logs --tail 100
+
+      - name: Kullanılmayan Docker imajlarını temizle
+        if: success()
+        run: docker image prune -f

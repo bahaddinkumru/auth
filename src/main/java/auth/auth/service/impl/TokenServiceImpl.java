@@ -101,7 +101,7 @@ public class TokenServiceImpl implements TokenService {
                     tokenRecord.getUserAgent());
 
             Long newTargetId = jwtService.extractTokenIdFromRefresh(newTokens.getRefreshToken());
-            tokenRecord.setReplacedByTokenId(newTargetId.toString());
+            tokenRecord.setReplacedByTokenId(newTargetId);
 
             refreshTokenRepository.save(tokenRecord);
             return newTokens;

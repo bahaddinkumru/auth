@@ -44,7 +44,7 @@ public class RefreshToken {
     private Instant revokedAt;
 
     @Column(name = "replaced_by_token_id")
-    private String replacedByTokenId;
+    private Long replacedByTokenId;
 
     @Column(name = "ip_address", length = 45)
     private String ipAddress;
