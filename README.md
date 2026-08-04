@@ -7,14 +7,28 @@ Basit bir Spring Boot kimlik doğrulama servisi.
 Uygulamayı ve veritabanını Docker üzerinden derleyip arka planda başlatmak için proje dizininde aşağıdaki komutu çalıştırın:
 
 ```bash
-docker compose up -d --build
+docker compose up -d
+```
 
-url user create http://localhost/api/v1/users/register
+2. Uygulamayı Maven ile çalıştır:
 
-login http://localhost/api/v1/auth/login
+```bash
+./mvnw spring-boot:run
+```
 
-refresh http://localhost/api/v1/auth/refresh
+Windows için:
 
-logout http://localhost/api/v1/auth/logout 
+```powershell
+mvnw.cmd spring-boot:run
+```
 
-refresh ve logout için post olarak login olduğumuzda bize verilen refresh tokenı giriyoruzS
+## Uygulama bilgisi
+
+- URL: `http://localhost:8081/api/v1`
+- Veritabanı: `postgresql://localhost:5432/reopiya_auth_db`
+- Kullanıcı: `reopiya_user`
+- Parola: `reopiya_password`
+
+## Not
+
+Docker Compose, proje kökünde bulunan `docker-compose.yml` dosyasını kullanır.
